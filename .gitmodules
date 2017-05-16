@@ -1,9 +1,0 @@
-[submodule "riplpox"]
-	path = riplpox
-	url = https://github.com/brandonheller/riplpox.git
-[submodule "ripl"]
-	path = ripl
-	url = https://github.com/brandonheller/ripl.git
-[submodule "pox"]
-	path = pox
-	url = https://github.com/noxrepo/pox.git
