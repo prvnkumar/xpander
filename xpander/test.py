@@ -2,7 +2,7 @@ from xpander import *
 from routing import *
 
 def test1():
-    topo = Xpander(d=3, num_lifts=3).G
+    topo = Xpander(256, 4, switch_d=7, lift_k=8).G
     routing = Routing(topo)
     paths = routing.ksp(4)
     for s in topo.nodes_iter():

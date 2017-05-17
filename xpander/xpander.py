@@ -1,3 +1,4 @@
+import math
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
@@ -6,17 +7,26 @@ from mininet.topo import Topo
 
 class Xpander(Topo):
     "Xpander topology."
-    def __init__(self, d=3, num_lifts=2, draw=True):
+    def __init__(self, num_servers, servers_per_rack,
+                 switch_d=3, lift_k=2, draw=True):
         # Initialize topology
         Topo.__init__(self)
-        self.d = d
+        self.switch_d = switch_d
 
         # Initialize with complete d-regular graph
-        self.G = self.create_regular(self.d)
+        self.G = self.create_regular(self.switch_d)
 
-        # Perform 2-lifting
+        # Perform k-lifting
+        num_switches = int(math.ceil(num_servers/servers_per_rack))
+        print "Num Switches: ", num_switches
+        num_lifts = int(math.ceil(math.log(num_switches/(switch_d+1),
+                                           lift_k)))
+        print "Num Lifts: ", num_lifts
+        print "Actual number of hosts: ", (servers_per_rack *
+                                           (switch_d + 1) *
+                                           math.pow(lift_k, num_lifts))
         for lift_i in range(num_lifts):
-            self.G = self.two_lift(self.G)
+            self.G = self.k_lift(self.G, lift_k)
 
         if draw:
             self.draw_graph(self.G)
@@ -37,7 +47,7 @@ class Xpander(Topo):
 
     def two_lift(self, G):
         mapping = dict(zip(G.nodes(), [2*x for x in G.nodes()] ))
-        G = nx.relabel_nodes(G,mapping)
+        G = nx.relabel_nodes(G, mapping)
         original_nodes = G.nodes()
         new_nodes = [n+1 for n in original_nodes]
         for n in new_nodes:
@@ -50,6 +60,22 @@ class Xpander(Topo):
             else:
                 G.add_edge(u+1, v)
                 G.add_edge(u, v+1)
+        return G
+
+    def k_lift(self, G, k):
+        mapping = dict(zip(G.nodes(), [k*x for x in G.nodes()]))
+        G = nx.relabel_nodes(G, mapping)
+        original_nodes = G.nodes()
+        for n in original_nodes:
+            for i in range(1, k):
+                G.add_node(n+i)
+        for u, v in G.edges():
+            G.remove_edge(u, v)
+            matching = list(range(k))
+            random.shuffle(matching)
+            for i in range(k):
+                j = matching[i]
+                G.add_edge(u+i, v+j)
         return G
 
     def graph_to_topo(self, G):
