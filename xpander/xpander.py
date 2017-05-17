@@ -6,15 +6,23 @@ from mininet.topo import Topo
 
 class Xpander(Topo):
     "Xpander topology."
-    def __init__( self ):
+    def __init__(self, d=3, num_lifts=2, draw=True):
         # Initialize topology
-        Topo.__init__( self )
-        self.d = 3
-        G = self.create_regular(self.d)
-        G = self.two_lift(G)
-        G = self.two_lift(G)
-        self.draw_graph(G)
-        self.graph_to_topo(G)
+        Topo.__init__(self)
+        self.d = d
+
+        # Initialize with complete d-regular graph
+        self.G = self.create_regular(self.d)
+
+        # Perform 2-lifting
+        for lift_i in range(num_lifts):
+            self.G = self.two_lift(self.G)
+
+        if draw:
+            self.draw_graph(self.G)
+
+        # Convert graph to mininet topology
+        self.graph_to_topo(self.G)
 
     def draw_graph(self, G):
         pos=nx.circular_layout(G)
@@ -22,7 +30,7 @@ class Xpander(Topo):
         labels = dict(zip(G.nodes(), [str(x) for x in G.nodes_iter()]))
         nx.draw_networkx_labels(G, pos, labels)
         plt.draw()
-        plt.savefig("g.png")
+        plt.savefig("graph.png")
 
     def create_regular(self, d):
         return nx.random_regular_graph(d, d+1)
@@ -34,15 +42,14 @@ class Xpander(Topo):
         new_nodes = [n+1 for n in original_nodes]
         for n in new_nodes:
             G.add_node(n)
-        for s,d in G.edges():
-            print s,d
-            G.remove_edge(s,d)
+        for u, v in G.edges():
+            G.remove_edge(u, v)
             if bool(random.getrandbits(1)):
-                G.add_edge(s,d)
-                G.add_edge(s+1,d+1)
+                G.add_edge(u,v)
+                G.add_edge(u+1, v+1)
             else:
-                G.add_edge(s+1,d)
-                G.add_edge(s,d+1)
+                G.add_edge(u+1, v)
+                G.add_edge(u, v+1)
         return G
 
     def graph_to_topo(self, G):
