@@ -18,13 +18,13 @@ class Xpander(Topo):
 
         # Perform k-lifting
         num_switches = int(math.ceil(num_servers/servers_per_rack))
-        print "Num Switches: ", num_switches
+        #print "Num Switches: ", num_switches
         num_lifts = int(math.ceil(math.log(num_switches/(switch_d+1),
                                            lift_k)))
-        print "Num Lifts: ", num_lifts
-        print "Actual number of hosts: ", (servers_per_rack *
-                                           (switch_d + 1) *
-                                           math.pow(lift_k, num_lifts))
+        #print "Num Lifts: ", num_lifts
+        #print "Actual number of hosts: ", (servers_per_rack *
+        #                                   (switch_d + 1) *
+        #                                   math.pow(lift_k, num_lifts))
         for lift_i in range(num_lifts):
             self.G = self.k_lift(self.G, lift_k)
 
