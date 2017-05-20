@@ -1,10 +1,13 @@
+import math
+
 from jellyfish import *
 from routing import *
 from xpander import *
 
 #NUM_SERVERS = 256
 NUM_SERVERS_PER_RACK = 8 # Given in the paper; NUM_SWITCHES = NUM_HOSTS / NUM_SERVERS_PER_RACK
-SWITCH_D = 7
+SWITCH_D = 8
+LIFT_K = 8
 
 def find_avg_shortest_path(topo, topo_type):
     routing = Routing(topo)
@@ -22,10 +25,14 @@ def find_avg_shortest_path(topo, topo_type):
 
 if __name__=="__main__":
     for num_servers in [128, 256, 512, 1024] + [1024*i for i in xrange(2, 3)]: #TODO: Want to go further but my VM gets sad for largr inputs
-	    print ("Num servers: %d" % num_servers)
+	    num_switches = int(math.ceil(num_servers/NUM_SERVERS_PER_RACK))
+            num_lifts = int(math.ceil(math.log(num_switches/(SWITCH_D+1),
+                                           LIFT_K)))
+            num_hosts = int(NUM_SERVERS_PER_RACK * (SWITCH_D + 1) * math.pow(LIFT_K, num_lifts))
+	    print "Num_hosts: ", num_hosts
 
-	    x_topo = Xpander(num_servers, NUM_SERVERS_PER_RACK, switch_d=SWITCH_D, lift_k=8).G
-	    j_topo = Jellyfish(num_servers, NUM_SERVERS_PER_RACK).G
+	    x_topo = Xpander(num_servers, NUM_SERVERS_PER_RACK, switch_d=SWITCH_D, lift_k=LIFT_K).G
+	    j_topo = Jellyfish(num_hosts, NUM_SERVERS_PER_RACK).G
 	    
 	    find_avg_shortest_path(x_topo, "Xpander")
 	    find_avg_shortest_path(j_topo, "Jellyfish")
