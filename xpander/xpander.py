@@ -5,10 +5,16 @@ import random
 
 from mininet.topo import Topo
 
+debug = False
+
+def log(msg):
+    if debug:
+        print msg
+
 class Xpander(Topo):
     "Xpander topology."
     def __init__(self, num_servers, servers_per_rack,
-                 switch_d=3, lift_k=2, draw=True):
+                 switch_d=3, lift_k=2, draw=False):
         # Initialize topology
         Topo.__init__(self)
         self.switch_d = switch_d
@@ -18,13 +24,13 @@ class Xpander(Topo):
 
         # Perform k-lifting
         num_switches = int(math.ceil(num_servers/servers_per_rack))
-        print "Num Switches: ", num_switches
+        log("Num Switches: " + str(num_switches))
         num_lifts = int(math.ceil(math.log(num_switches/(switch_d+1),
                                            lift_k)))
-        print "Num Lifts: ", num_lifts
-        print "Actual number of hosts: ", (servers_per_rack *
+        log("Num Lifts: " + str(num_lifts))
+        log("Actual number of hosts: " + str((servers_per_rack *
                                            (switch_d + 1) *
-                                           math.pow(lift_k, num_lifts))
+                                           math.pow(lift_k, num_lifts))))
         for lift_i in range(num_lifts):
             self.G = self.k_lift(self.G, lift_k)
 

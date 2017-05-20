@@ -8,12 +8,12 @@ from mininet.topo import Topo
 # Based on interpretation of https://people.inf.ethz.ch/asingla/papers/jellyfish-nsdi12.pdf 's Section 3
 
 class Jellyfish(Topo):
-    "Xpander topology."
-    def __init__(self, num_servers, servers_per_rack, draw=True):
+    "Jellyfish topology."
+    def __init__(self, num_servers, servers_per_rack, draw=False):
 
         # Initialize topology
         Topo.__init__(self)
-	num_switches = num_servers / servers_per_rack
+        num_switches = num_servers / servers_per_rack
 
         # Initialize with complete d-regular graph
         self.G = self.create_regular(servers_per_rack, num_switches)
