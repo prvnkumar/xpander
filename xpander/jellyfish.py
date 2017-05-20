@@ -9,14 +9,14 @@ from mininet.topo import Topo
 
 class Jellyfish(Topo):
     "Jellyfish topology."
-    def __init__(self, num_servers, servers_per_rack, draw=False):
+    def __init__(self, num_servers, servers_per_rack, switch_d, draw=False):
 
         # Initialize topology
         Topo.__init__(self)
         num_switches = num_servers / servers_per_rack
 
         # Initialize with complete d-regular graph
-        self.G = self.create_regular(servers_per_rack, num_switches)
+        self.G = self.create_regular(switch_d, num_switches)
 
         if draw:
             self.draw_graph(self.G)
