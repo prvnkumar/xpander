@@ -11,10 +11,19 @@ def log(msg):
     if debug:
         print msg
 
+def xpander_num_servers(num_servers, num_servers_per_rack, switch_d, lift_k):
+    num_switches = int(math.ceil(num_servers/num_servers_per_rack))
+    if num_switches <= switch_d:
+        return None
+    num_lifts = int(math.ceil(math.log(num_switches/(switch_d+1), lift_k)))
+    num_switches = int((switch_d + 1) * math.pow(lift_k, num_lifts))
+    num_servers = num_switches * num_servers_per_rack
+    return num_servers
+
 class Xpander(Topo):
     "Xpander topology."
     def __init__(self, num_servers, servers_per_rack,
-                 switch_d=3, lift_k=2, draw=False):
+                 switch_d=3, lift_k=2, draw=False, draw_output="graph.png"):
         # Initialize topology
         Topo.__init__(self)
         self.switch_d = switch_d
@@ -35,18 +44,19 @@ class Xpander(Topo):
             self.G = self.k_lift(self.G, lift_k)
 
         if draw:
-            self.draw_graph(self.G)
+            self.draw_graph(self.G, draw_output)
 
         # Convert graph to mininet topology
         self.graph_to_topo(self.G)
 
-    def draw_graph(self, G):
+    def draw_graph(self, G, draw_output):
         pos=nx.circular_layout(G)
         nx.draw(G, pos)
         labels = dict(zip(G.nodes(), [str(x) for x in G.nodes_iter()]))
         nx.draw_networkx_labels(G, pos, labels)
         plt.draw()
-        plt.savefig("graph.png")
+        plt.savefig(draw_output)
+        plt.clf()
 
     def create_regular(self, d):
         return nx.random_regular_graph(d, d+1)

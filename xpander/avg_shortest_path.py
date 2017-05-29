@@ -1,8 +1,6 @@
-import matplotlib as mpl
-mpl.use('Agg')
 import json
 import math
-import matplotlib.pyplot as plt
+import plot
 
 from collections import defaultdict
 from jellyfish import *
@@ -11,7 +9,25 @@ from xpander import *
 
 LIFT_K = 2
 
-def find_avg_shortest_path(topo, topo_type, servers_per_rack):
+def avgsp_lb(N, r):
+    k = 1
+    R = float(N - 1)
+    for j in range(1, N):
+        tmpR = R - (r * math.pow(r - 1, j - 1))
+        if tmpR >= 0:
+            R = tmpR
+        else:
+            k = j
+            break
+    opt_d = 0.0
+    for j in range(1, k):
+        opt_d += j * r * math.pow(r - 1, j - 1)
+    opt_d += k * R
+    opt_d /= (N - 1)
+    return opt_d
+
+def find_avg_shortest_path_host(topo, servers_per_rack):
+    """Average inter-host shortest path length"""
     # Defining path length as the number of intermediate switches
     routing = Routing(topo)
     paths = routing.ksp(1)
@@ -35,56 +51,46 @@ def find_avg_shortest_path(topo, topo_type, servers_per_rack):
     avg_shortest_path = avg_shortest_path / num_paths
     return avg_shortest_path
 
+def find_avg_shortest_path_sw(topo):
+    """Average inter-switch shortest path length"""
+    # Defining path length as the number of intermediate links
+    routing = Routing(topo)
+    paths = routing.ksp(1)
+    avg_shortest_path = 0.0
+    num_paths = 0.0
+    for s in topo.nodes_iter():
+        for d in topo.nodes_iter():
+            if s != d:
+                min_path_len = len(paths[s][d][0]) - 1
+                avg_shortest_path += min_path_len
+                num_paths += 1
+    avg_shortest_path = avg_shortest_path / num_paths
+    return avg_shortest_path
+
 def avg_path_length_experiment(switch_k, num_servers_per_rack):
     splengths = defaultdict(defaultdict) # topo_type -> num_servers -> path_len
     switch_d = switch_k - num_servers_per_rack
-    for num_servers in [256, 512, 1024, 2048, 4096, 8192, 16384]:
-        num_switches = int(math.ceil(num_servers/num_servers_per_rack))
-        if num_switches <= switch_d:
+    for num_servers in [(1 << i) for i in range(8, 15)]:
+        # Might not get the exact number of servers as specified
+        num_servers = xpander_num_servers(num_servers, num_servers_per_rack,
+                                          switch_d, LIFT_K)
+        if num_servers is None:
             continue
-
-        # We might not get the exact number of servers specified
-        num_lifts = int(math.ceil(math.log(num_switches/(switch_d+1), LIFT_K)))
-        num_servers = int(num_servers_per_rack * (switch_d + 1) * math.pow(LIFT_K, num_lifts))
         print "num_servers: ", num_servers
-
-        x_topo = Xpander(num_servers, num_servers_per_rack, switch_d=switch_d, lift_k=LIFT_K).G
+        x_topo = Xpander(num_servers, num_servers_per_rack, switch_d=switch_d,
+                         lift_k=LIFT_K).G
         j_topo = Jellyfish(num_servers, num_servers_per_rack, switch_d).G
 
-        splengths["xpander"][num_servers] = find_avg_shortest_path(x_topo,
-                                                                 "Xpander",
-                                                                 num_servers_per_rack)
-        splengths["jellyfish"][num_servers] = find_avg_shortest_path(j_topo,
-                                                                   "Jellyfish",
-                                                                   num_servers_per_rack)
+        splengths["xpander"][num_servers] = nx.average_shortest_path_length(x_topo)
+        splengths["jellyfish"][num_servers] = nx.average_shortest_path_length(j_topo)
+        num_switches = num_servers / num_servers_per_rack
+        splengths["opt"][num_servers] = avgsp_lb(num_switches, switch_d)
     return splengths
 
-getcolor = {"xpander" : "gray", "jellyfish" : "orange"}
-getmarker = {"xpander" : "o", "jellyfish" : "s"}
-
-def plot_path_lengths(path_lengths, file_name):
-    plt.figure(figsize=(6,4))
-    for topo_type, data in path_lengths.iteritems():
-        num_servers = sorted([int(k) for k in data.keys()])
-        path_lengths = [float(data[i]) for i in num_servers]
-        print data
-        plt.plot(num_servers, path_lengths,
-                 color = getcolor[topo_type],
-                 linestyle = '-',
-                 linewidth=4,
-                 markersize=8,
-                 marker = getmarker[topo_type],
-                 label=topo_type)
-    plt.xlabel("Number of servers")
-    plt.ylabel("Avg. shortest paths")
-    plt.legend(loc="best")
-    plt.savefig(file_name)
-    plt.clf()
-
 if __name__=="__main__":
-    read_from_file = True
+    read_from_file = False
     for params in [(32,8), (48,12)]:
-        file_name = "sp_" + str(params).replace(' ', '_')
+        file_name = "output/sp_" + str(params).replace(' ', '_')
         splengths = defaultdict(defaultdict)
         if read_from_file:
             try:
@@ -102,4 +108,4 @@ if __name__=="__main__":
                                                    num_servers_per_rack)
             with open(file_name + '.json', 'w') as f:
                 json.dump(splengths, f)
-        plot_path_lengths(splengths, file_name + ".pdf")
+        plot.plot_path_lengths(splengths, file_name + ".pdf")

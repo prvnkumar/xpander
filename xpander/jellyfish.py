@@ -16,7 +16,7 @@ class Jellyfish(Topo):
         num_switches = num_servers / servers_per_rack
 
         # Initialize with complete d-regular graph
-        self.G = self.create_regular(switch_d, num_switches)
+        self.G = nx.random_regular_graph(switch_d, num_switches)
 
         if draw:
             self.draw_graph(self.G)
@@ -31,9 +31,6 @@ class Jellyfish(Topo):
         nx.draw_networkx_labels(G, pos, labels)
         plt.draw()
         plt.savefig("graph.png")
-
-    def create_regular(self, d, N):
-        return nx.random_regular_graph(d, N)
 
     def graph_to_topo(self, G):
         for n in G.nodes_iter():
