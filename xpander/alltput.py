@@ -79,7 +79,7 @@ def find_max_aatput(g):
 def all_to_all_tput_experiment(switch_k, num_servers_per_rack):
     aatput = defaultdict(defaultdict) # topo_type -> num_servers -> tput
     switch_d = switch_k - num_servers_per_rack
-    for num_servers in [(1 << i) for i in range(5, 8)]:
+    for num_servers in [(1 << i) for i in range(5, 12)]:
         # Might not get the exact number of servers as specified
         num_servers = xpander_num_servers(num_servers, num_servers_per_rack,
                                           switch_d, LIFT_K)

@@ -1,4 +1,6 @@
 import math
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
@@ -23,7 +25,8 @@ def xpander_num_servers(num_servers, num_servers_per_rack, switch_d, lift_k):
 class Xpander(Topo):
     "Xpander topology."
     def __init__(self, num_servers, servers_per_rack,
-                 switch_d=3, lift_k=2, draw=False, draw_output="graph.png"):
+                 switch_d=3, lift_k=2, draw=False, draw_output="graph.png",
+                 convert_to_topo=True):
         # Initialize topology
         Topo.__init__(self)
         self.switch_d = switch_d
@@ -47,7 +50,21 @@ class Xpander(Topo):
             self.draw_graph(self.G, draw_output)
 
         # Convert graph to mininet topology
-        self.graph_to_topo(self.G)
+        if convert_to_topo:
+            self.graph_to_topo(self.G)
+    
+    def add_one_node(self, draw=False, draw_output="incr_graph.png"):
+        # Remove d/2 random edges 
+        remove_k = int(math.ceil(self.switch_d/2))
+        new_n = len(self.G.nodes()) + 1
+        self.G.add_node(new_n)
+        for (u, v) in random.sample(self.G.edges(), k=remove_k):
+            self.G.remove_edge(u, v)
+            self.G.add_edge(new_n, u)
+            self.G.add_edge(new_n, v)
+        
+        if draw:
+            self.draw_graph(self.G, draw_output)
 
     def draw_graph(self, G, draw_output):
         pos=nx.circular_layout(G)
