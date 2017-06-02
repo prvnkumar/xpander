@@ -6,10 +6,11 @@ import pulp
 
 from collections import defaultdict
 from itertools import izip
-
+import plot
 from jellyfish import *
 from routing import *
 from xpander import *
+from alltput import *
 
 LIFT_K = 2
 
@@ -36,9 +37,10 @@ def ksp_tput_experiment(switch_k, num_servers_per_rack, ksp_ks):
     for ksp_k in ksp_ks:
             ksptput["xpander"][ksp_k] = dict()
             ksptput["jellyfish"][ksp_k] = dict()
+            ksptput["opt"][ksp_k] = dict()
 
     switch_d = switch_k - num_servers_per_rack
-    for num_servers in [(1 << i) for i in range(6, 10)]:
+    for num_servers in [num_servers_per_rack * (switch_d + 1) * (1 << i) for i in range(5)]:
         num_switches = int(math.ceil(num_servers/num_servers_per_rack))
         if num_switches <= switch_d:
             continue
@@ -57,44 +59,45 @@ def ksp_tput_experiment(switch_k, num_servers_per_rack, ksp_ks):
             ksptput["jellyfish"][ksp_k][num_servers] = find_ksp_aatput(j_topo,
                                                                        ksp_k)
 
+        opt_aatput = aatput_ub(num_switches,
+                               switch_d,
+                               num_switches * (num_switches - 1))
+        for ksp_k in ksp_ks:
+            ksptput["opt"][ksp_k][num_servers] = opt_aatput
+
     return ksptput
-
-getcolor = {"xpander" : "gray", "jellyfish" : "orange"}
-getmarker = {"xpander" : "o", "jellyfish" : "s"}
-
-def plot_all_all_tput(path_lengths, file_name):
-    plt.figure(figsize=(6,4))
-    for topo_type, k_data in path_lengths.iteritems():
-        for ksp_k, data in k_data.iteritems():
-            num_servers = sorted([int(k) for k in data.keys()])
-            path_lengths = [float(data[i]) for i in num_servers]
-            print data
-            plt.plot(num_servers, path_lengths,
-                     color = getcolor[topo_type],
-                     linestyle = '-',
-                     linewidth=4,
-                     markersize=8,
-                     marker = getmarker[topo_type],
-                     label=topo_type + '-' + str(ksp_k))
-    plt.xlabel("Number of servers")
-    plt.ylabel("Avg. shortest paths")
-    plt.legend(loc="best")
-    plt.savefig(file_name)
-    plt.clf()
 
 if __name__=="__main__":
     read_from_file = False
     ksp_ks = [6, 8, 10]
     for params in [(36, 6)]:
-        file_name = "ksp_" + str(params).replace(' ', '_')
+        file_name = "output/ksp_tput_" + str(params).replace(' ', '_')
         ksptput = defaultdict(defaultdict)
+        switch_k, num_servers_per_rack = params
         if read_from_file:
-            print "File not found."
+            try:
+                tmp_len = None
+                with open(file_name + '.json', 'r') as f:
+                    tmp_len = json.load(f)
+                for topo, data in tmp_len.iteritems():
+                    ksptput[topo] = defaultdict(defaultdict)
+                    for ksp_k,serv_tput in data.iteritems():
+                        ksp_k = int(ksp_k)
+                        ksptput[topo][ksp_k] = defaultdict(float)
+                        for num_serv,tput in serv_tput.iteritems():
+                            num_serv = int(num_serv)
+                            tput = float(tput)
+                            ksptput[topo][ksp_k][num_serv] = tput
+            except IOError:
+                print "File not found."
         else:
-            switch_k, num_servers_per_rack = params
             ksptput = ksp_tput_experiment(switch_k,
                                           num_servers_per_rack,
                                           ksp_ks)
             with open(file_name + '.json', 'w') as f:
                 json.dump(ksptput, f)
-        plot_all_all_tput(ksptput, file_name + ".pdf")
+        plot.plot_ksp_tput(ksptput, file_name + ".png", num_servers_per_rack)
+        plot.plot_ksp_tput(ksptput, file_name + ".png",
+                           num_servers_per_rack, aggregate=True)
+        plot.plot_ksp_tput(ksptput, file_name + ".png", num_servers_per_rack,
+                           per_node=True)

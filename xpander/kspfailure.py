@@ -90,4 +90,4 @@ if __name__=="__main__":
                                           8)
             with open(file_name + '.json', 'w') as f:
                 json.dump(ksptput, f)
-        plot.plot_ksp_fail_tput(ksptput, file_name + ".pdf")
+        plot.plot_ksp_fail_tput(ksptput, file_name + ".png")

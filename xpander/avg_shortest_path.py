@@ -108,4 +108,4 @@ if __name__=="__main__":
                                                    num_servers_per_rack)
             with open(file_name + '.json', 'w') as f:
                 json.dump(splengths, f)
-        plot.plot_path_lengths(splengths, file_name + ".pdf")
+        plot.plot_path_lengths(splengths, file_name + ".png")
