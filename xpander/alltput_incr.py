@@ -77,7 +77,7 @@ def find_max_aatput(g):
 
 
 def all_to_all_tput_experiment(aatput, x_topo, j_topo, num_servers, switch_d):
-    for j in range(100):
+    for j in range(30):
         num_servers += 1
         print num_servers
 
