@@ -25,13 +25,14 @@ class Jellyfish(Topo):
         if convert_to_topo:
             self.graph_to_topo(self.G)
 
-    def draw_graph(self, G, draw_output=""):
+    def draw_graph(self, G, draw_output):
         pos=nx.circular_layout(G)
         nx.draw(G, pos)
         labels = dict(zip(G.nodes(), [str(x) for x in G.nodes_iter()]))
         nx.draw_networkx_labels(G, pos, labels)
         plt.draw()
-        plt.savefig("graph.png")
+        plt.savefig(draw_output)
+        plt.clf()
 
     def graph_to_topo(self, G):
         for n in G.nodes_iter():
