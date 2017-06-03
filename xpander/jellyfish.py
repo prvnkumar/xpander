@@ -9,7 +9,7 @@ from mininet.topo import Topo
 
 class Jellyfish(Topo):
     "Jellyfish topology."
-    def __init__(self, num_servers, servers_per_rack, switch_d, draw=False):
+    def __init__(self, num_servers, servers_per_rack, switch_d, draw=False, draw_output="", convert_to_topo=True):
 
         # Initialize topology
         Topo.__init__(self)
@@ -19,12 +19,13 @@ class Jellyfish(Topo):
         self.G = nx.random_regular_graph(switch_d, num_switches)
 
         if draw:
-            self.draw_graph(self.G)
+            self.draw_graph(self.G, draw_output)
 
         # Convert graph to mininet topology
-        self.graph_to_topo(self.G)
+        if convert_to_topo:
+            self.graph_to_topo(self.G)
 
-    def draw_graph(self, G):
+    def draw_graph(self, G, draw_output=""):
         pos=nx.circular_layout(G)
         nx.draw(G, pos)
         labels = dict(zip(G.nodes(), [str(x) for x in G.nodes_iter()]))
@@ -38,5 +39,17 @@ class Jellyfish(Topo):
         for e in G.edges_iter():
             self.addLink("s" + str(e[0]),
                          "s" + str(e[1]))
+
+    def add_one_node(self, draw=False, draw_output="incr_graph.png"):
+        # Remove a random edge
+        new_n = len(self.G.nodes()) + 1
+        self.G.add_node(new_n)
+        for (u, v) in random.sample(self.G.edges(), k=1):
+            self.G.remove_edge(u, v)
+            self.G.add_edge(new_n, u)
+            self.G.add_edge(new_n, v)
+
+        if draw:
+            self.draw_graph(self.G, draw_output)
 
 topos = { 'jellyfish': ( lambda: Jellyfish() ) }
