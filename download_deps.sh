@@ -39,7 +39,7 @@ echo -e "\nInstalling python dependencies..."
 sudo pip install --upgrade pip
 sudo apt-get -y install libfreetype6-dev libpng-dev
 sudo pip install --ignore-installed numpy
-sudo pip install --ignore-installed matplotlib=2.0.2
+sudo pip install --ignore-installed matplotlib==2.0.2
 sudo pip install --ignore-installed pulp
 sudo pip install --ignore-installed networkx
 
