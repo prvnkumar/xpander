@@ -2,6 +2,7 @@
 ## Paper: Xpander: Towards Optimal-Performance Datacenters. CoNEXT ’16
 
 Blog post: https://reproducingnetworkresearch.wordpress.com/2017/06/05/cs244-17-xpander-towards-optimal-performance-datacenters/
+
 Instructions to replicate
 -------------------------
 
